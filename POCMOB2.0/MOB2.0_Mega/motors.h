@@ -2,44 +2,63 @@
 #define _MOTORS_H
 
 #include <Servo.h>
-#include "BasicStepperDriver.h"
-#include "A4988.h"
+#include <Arduino.h>
+#include <Adafruit_MotorShield.h> // Adafruit_motorshield V2 https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino
+#include "utility/Adafruit_MS_PWMServoDriver.h"
 
-// Servo Motor for magnet arm
-#define servoPin 3
+#include "eselog.h"
+#include "heater.h"
 
-// Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
-#define MOTOR_STEPS 200
+#define zServoPin 44  // magnets
+#define yServoPin 45 // fluo servo
+#define limitPin 43  // limit switch -- contact = detect HIGH
 
-// Stepper 1 
-#define DIR_1 6
-#define STEP_1 7
-#define ENABLE_1 12 
+// Port definitions for Adafruit motorshield
+#define xStepperPort 1    // X = actuator carriage  --> move magnets between wells
+#define xStepperRPM 100
+#define stepsPerRev 200
+#define fanBC_port 3
+#define fanPCR_port 4
 
-//
-#define DIR_2 8
-#define STEP_2 9
-#define ENABLE_2 13 
+extern int zbottom;
+extern int ztop;
+extern int zmiddle;
 
-// Acceleration and deceleration values are always in FULL steps / s^2
-#define MOTOR_ACCEL 1000
-#define MOTOR_DECEL 1000
+extern int x_step;          // X step size between wells
+extern int x_inletstep;     // X step from sample inlet to 1st well
+extern int x_PCRstep;       // X step from last well to PCR well
+extern int x_totalstep;     // X step from end to end
 
-// Limit switches
-/*
- *    switch is opens when pressed --> using pull-up resistor (INPUT_PULLUP) this changes digitalRead value to HIGH 
- */
-#define LIMIT_1 4
-#define LIMIT_2 5
-     
-extern A4988 stepper_1;
-extern A4988 stepper_2;
-extern int RPM;
+extern Adafruit_MotorShield AFMS; // Create the motor shield object with the default I2C address
+extern Adafruit_StepperMotor *xAxis;  // wells axis
+extern Adafruit_DCMotor *fanPCR;
+extern Adafruit_DCMotor *fanBC;
+extern int yWells[];
+extern int yWells_n;
+
 void setupMotors();
-void moveStepper(A4988 stepper, long rev);
-void moveStepper(A4988 stepper, long rev, int microsteps);
+
+void moveW(int well);
+
+void moveZ(int pos, int steps, int hold_time);
+
+void moveY(int pos, int steps, int hold_time);
+
 void moveServo(int servo_n,int start, int finish, int steps, int hold_time);
-void init1();
-void init2();
+
+void resetX();
+
+void magTransfer(boolean delays);
+
+void moveStepper(int steps, int mode);  
+// positive steps = FORWARD, negative steps = BACKWARD
+// uses DOUBLE (2 coils activated at once for higher torque)
+// other options:   INTERLEAVE = alternate single and double coils for twice resolution (1/2 speed)
+//                  MICROSTEP = coils are PWM'd to create smooth motion between steps
+
+void scanY();   
+void calibrate(); 
+
+void fan_toggle(int fan, boolean state);
 
 #endif

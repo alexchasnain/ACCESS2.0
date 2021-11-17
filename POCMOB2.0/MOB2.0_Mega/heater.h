@@ -1,16 +1,18 @@
-#ifndef _HEATER_H
-#define _HEATER_H
+#ifndef _HEATERS_H
+#define _HEATERS_H
 
 #include <Arduino.h>  // needed for compiling with digitalWrite() function
 #include "motors.h"
-#include "serialcomm.h"
+#include "serial.h"
 #include "DualVNH5019MotorShield.h"
 #include <Adafruit_MotorShield.h> // Adafruit_motorshield V2 https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino
 
 // Pin out
 #define thermistorR0Pin A8 // thermistors' reference
-#define thermistorBSCRxPin A9 // sample thermistor
+#define thermistorBSCRxPin A9 // BSC thermistor
 #define thermistorPCRRxPin A10 // PCR thermistor
+#define thermistorWMRRxPin A11 // WM thermistor (Channels 1-2, "right side")
+#define thermistorWMLRxPin A12 // WM thermistor (Channels 3-4, "left side")
 #define blueLEDPin 9 // blue LED
 #define redLEDPin 10 // red LED
 
@@ -29,6 +31,8 @@ extern int idTemp; // Initial Denaturation (98 degC, 8 min)
 extern int idTime;
 extern int sadTemp; // Sulphonation and Deamination (58 degC, 1 hr)
 extern int sadTime;
+extern int wmTemp; // Wax Melting (X degC, X min)
+extern int wmTime;
 extern int bbTemp; // Bead Binding (25 degC, 10 min)
 extern int bbTime;
 extern int desTemp; // Desulphonation (25 degC, 15 min)
@@ -59,9 +63,9 @@ double readTemp(int heater); // returns thermistors' temperatures (heater = 1 fo
 
 void setTemp(int heater, float setPoint, float hold_time, boolean detect_flag);
 
-void bisCon();
+void bsc();
 
-void cycle(); 
+void pcr(); 
 
 void melt(); 
 

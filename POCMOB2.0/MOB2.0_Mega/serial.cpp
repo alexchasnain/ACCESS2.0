@@ -1,4 +1,4 @@
-#include "serialcomm.h"
+#include "serial.h"
 /**********
     STATS
  **********/
@@ -23,7 +23,7 @@ char delim = ','; // delimiter for output
 int delayPrint = 100; // delay interval (ms) between print statements
 long init_time;
 
-void setupSerialcomm() {
+void setupSerial() {
   Serial.begin(BAUD);
   Serial.println("<Arduino Connected>");
   init_time = millis();
@@ -191,11 +191,11 @@ void parse_input() {
       Serial.println("\n*");
     }
 
-    else if (serialCmd[0] == 'c' && serialCmd[5] == '(') { // cycle(float annealTemp, int annealTime, float denatureTemp, int denatureTime, int N, float hotsTime, boolean detect);
+    else if (serialCmd[0] == 'c' && serialCmd[5] == '(') { // pcr(float annealTemp, int annealTime, float denatureTemp, int denatureTime, int N, float hotsTime, boolean detect);
       memcpy(&cmdBuffer[0], &serialCmd[6], 26);
       parse_split(7);
       Serial.println('*');
-      cycle(atoi(cmds[0]), atoi(cmds[1]), atoi(cmds[2]), atoi(cmds[3]), atoi(cmds[4]), atoi(cmds[5]), atoi(cmds[6]));
+      pcr(atoi(cmds[0]), atoi(cmds[1]), atoi(cmds[2]), atoi(cmds[3]), atoi(cmds[4]), atoi(cmds[5]), atoi(cmds[6]));
       Serial.println("\n*");
     }
 

@@ -1,10 +1,9 @@
-#ifndef _SERIALCOMM_H
-#define _SERIALCOMM_H
+#ifndef _SERIAL_H
+#define _SERIAL_H
 
 #include <Arduino.h>
 #include "motors.h"
-#include "eselog.h"
-#include "heater.h"
+#include "heaters.h"
 
 
 #define BAUD 115200
@@ -15,7 +14,7 @@ extern long init_time;
 
 extern boolean fluo_connected;
 
-void setupSerialcomm();
+void setupSerial();
 
 void read_serial();
 void parse_input();
@@ -47,7 +46,7 @@ void parse_split(int cmd_num);
  *    calibrate     -- scans fluorescence in in small Y increments and returns values
  *    reset
 
- *    cycle(float annealTemp, int annealTime, float denatureTemp, int denatureTime, int N, float hotsTime, boolean detect);
+ *    pcr(float annealTemp, int annealTime, float denatureTemp, int denatureTime, int N, float hotsTime, boolean detect);
  *    
  */
 

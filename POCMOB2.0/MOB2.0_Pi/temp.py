@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-# PromptDx Libraries
+# POCMOB2.0 Libraries
 import cam
 
 
@@ -21,19 +21,32 @@ GPIO.setwarnings(False)
 global ser, IO_queue, stop_signal, ard_data, SENDING
 
 # Time/temperature readings
-global NANO_TEMP, NANO_TIME
+global MEGA_TEMP, MEGA_TIME
 
-# Cycle Parameters - all temps in degC, all times in seconds
-global rt_temp, rt_time, hs_temp, hs_time, an_temp, an_time, de_temp, de_time, cycle_num
-rt_temp = 55
-rt_time = 0 
-hs_temp = 100
-hs_time = 5
-an_temp = 60
-an_time = 20
-de_temp = 95
-de_time = 10
-cycle_num = 40
+# MOB parameters (degC, s)
+global sdTemp, sdTime, idTemp, idTime, sadTemp, sadTime, wmTemp, wmTime, bbTemp, bbTime, desTemp, desTime,
+    eluTemp, eluTime, phsTemp, phsTime, paTemp, paTime, pdTemp, pdTime, cycleNum
+sd_temp = 30  # Sample Digestion (30 degC, 45 min)
+sd_time = 2700
+id_temp = 98  # Initial Denaturation (98 degC, 8 min)
+id_time = 480 
+sad_temp = 58  # Sulphonation and Deamination (58 degC, 1 hr)
+sad_time = 3600 
+wm_temp = 98  # Wax Melting (X degC, X min)
+wm_time = 60 
+bb_temp = 25  # Bead Binding (25 degC, 10 min)
+bb_time = 600 
+des_temp = 25  # Desulphonation (25 degC, 15 min)
+des_time = 15 
+elu_temp = 70  # Elution (70 degC, 10 min)
+elu_time = 10 
+phs_temp = 103  # PCR Hot Start (103 degC, 20 s)
+phs_time = 20 
+pa_temp = 60  # PCR Annealing (60 degC, 15 s) 
+pa_time = 15 
+pd_temp = 103  # PCR Denaturation (103 degC, 5 s)
+pd_time = 5 
+cycle_num = 40  # Cycle Number
 
 BLED_PWM = 100
 RLED_PWM = 100
@@ -58,7 +71,7 @@ class init_temp_thread(threading.Thread):
         #ser = serial.Serial('/dev/ttyUSB0',57600,timeout=0.5)  # used for USB connection      
         SENDING = False
         
-        # Reset arduino with new connection attempt to serial
+        # Reset Arduino with new connection attempt to serial
         resetArd()
 
 def init_temp():
@@ -71,14 +84,14 @@ def init_dir():
     global active_dir
 
     home_dir = str(Path.home())
-    prompt_dir = home_dir + '/PromptDx'
-    users_dir = prompt_dir + '/User'
+    pocmob_dir = home_dir + '/POCMOB2.0'
+    users_dir = pocmob_dir + '/User'
     user_dir = users_dir + '/' + user
 
     # Make Directories if don't exist
     if not os.path.exists(user_dir):
         try:
-            os.mkdir(prompt_dir)
+            os.mkdir(pocmob_dir)
         except FileExistsError:
             pass
         try:
@@ -104,7 +117,7 @@ def resetArd():
         ser.open()
         pass
     
-    print("Initializing Heater Arduino nano...")
+    print("Initializing Heater Arduino Mega...")
     time.sleep(0.5) 
     #flush serial
     #ser.read(100)
@@ -112,26 +125,26 @@ def resetArd():
     #reset Arduino
     #ser.write("<reset>".encode('utf-8'))
 
-    #Arduino nano prints "<NANO-MOTOR-READY>" on startup
+    #Arduino Mega prints "<MEGA-MOTOR-READY>" on startup
     send_time = time.time()
     echo = ser.readline().decode('utf-8',errors='replace')
-    print("waiting for nano response...",echo)
-    while echo != "<NANO-TEMP-READY>\r\n":
+    print("waiting for Mega response...",echo)
+    while echo != "<MEGA-TEMP-READY>\r\n":
         echo = ser.readline().decode('utf-8',errors='replace')
         
         # TIMEOUT in 3 seconds        
         if(time.time() - send_time > 3):
 
-            print("WARNING: Connection to heater nano timed out (3 seconds)")
+            print("WARNING: Connection to heater Mega timed out (3 seconds)")
             return
 
     print("Heater Arduino Connected!")
 
 def cycle():
     global user, ser
-    # Make folder in PromptDx directory
+    # Make folder in POCMOB2.0 directory
     now = datetime.now()
-    dirname = str(Path.home()) + '/PromptDx/User/' + user + '/' + now.strftime("%m-%d-%Y-%Hh%Mm%Ss")
+    dirname = str(Path.home()) + '/POCMOB2.0/User/' + user + '/' + now.strftime("%m-%d-%Y-%Hh%Mm%Ss")
     os.mkdir(dirname)
     os.chdir(dirname)
 
@@ -144,7 +157,7 @@ def cycle():
     file_temp.write('{}\n'.format(dirname))
     file_fluo.write('{}\n'.format(dirname))
 
-    # Send temperature settings to arduino
+    # Send temperature settings to Arduino
     ardSend("rte(" + str(rt_temp)+")")
     ardSend("rti(" + str(rt_time)+")")
     ardSend("hte(" + str(hs_temp)+")")
@@ -155,10 +168,10 @@ def cycle():
     ardSend("dti(" + str(de_time)+")")
     ardSend("cnu(" + str(cycle_num)+")")
     
-    # Send start command to arduino
+    # Send start command to Arduino
     ardSend("cycle")
 
-    # While loop - read arduino, parse and log data
+    # While loop - read Arduino, parse and log data
     cycling = True
     takingPic = False
     picThread = ""
@@ -202,8 +215,8 @@ def cycle():
             elif ARGS[0] == "T":
                 file_temp.write(data[2:]) # write original data without "T,"
                 file_temp.write('\n')
-                NANO_TIME = ARGS[1]
-                NANO_TEMP = ARGS[2]
+                MEGA_TIME = ARGS[1]
+                MEGA_TEMP = ARGS[2]
 
             # PB/PR = take a picture
             elif ARGS[0] == "PB":
@@ -267,7 +280,7 @@ def FANoff():
 def ardRead(msg):
     msg_in =  ser.readline().decode('utf-8',errors='replace')
     if msg_in != "":
-        print('RECEIVED FROM NANO: ', msg_in[:-2])
+        print('RECEIVED FROM MEGA: ', msg_in[:-2])
         ardSend(msg_in[:-2])
    
     match = (msg_in == (msg + "\r\n"))

@@ -7,14 +7,10 @@ Adafruit_StepperMotor *xAxis;
 Adafruit_DCMotor *fanPCR;
 Adafruit_DCMotor *fanBC;
 
-int yWells_n = 4;
 int ztop = 1210; 
 int zbottom = 1760; 
 int zmiddle = (ztop + zbottom) / 2;
-
-int x_pos = 0; // 0 corresponds to magnet arm all the way back against limit switch
 int z_pos = zmiddle;
-
 
 // Well positions (add each preceeding well number to get to designated well from starting position)
 int x_1a = 0; // sample
@@ -25,6 +21,7 @@ int x_4 = 47; // wash 2
 int x_5 = 47; // wash 3
 int x_6 = 55; // PCR
 int xWells[7] = {x_1a, x_1a+x_1b, x_1a+x_1b+x_2, x_1a+x_1b+x_2+x_3, x_1a+x_1b+x_2+x_3+x_4, x_1a+x_1b+x_2+x_3+x_4+x_5, x_1a+x_1b+x_2+x_3+x_4+x_5+x_6};
+int maxSteps = 350; // maximum number of steps in X direction
 
 
 void setupMotors() {
@@ -52,28 +49,31 @@ void moveZ(int pos, int steps, int hold_time) {
   moveServo(1, z_pos, pos, steps, hold_time);
 }
 
-void moveY(int pos, int steps, int hold_time) {
-  moveServo(2, y_pos, pos, steps, hold_time);
-}
 
 Servo s;
 int pin;
 void moveServo(int servo_n, int start, int finish, int steps, int hold_time){
+  /*
+   *    servo_n == 1 --> magServo
+   *      Other servo_n values left open for future integration of more servos if needed
+   *    start   == assumed initial position of servo arm 
+   *    finish  == targeted final position of servo arm
+   *    steps   == increment/decrement magnitude for position -- controls speed of servo rotation
+   *    hold_time == delay after servo has reached "finish" to hold at that position
+   */
   
   // check if values make sense - return if not
   if(servo_n >2 || servo_n<1 || start <700 || start > 2500 || finish <700 || finish > 2500 || hold_time <0 || steps <0 || steps >2000) return;
 
   // Attach appropriate servo
-
   if(servo_n == 1){       // mag servo
     pin = zServoPin;
     z_pos = finish;
   }
-  else if(servo_n == 2){  // fluo servo
-    pin = yServoPin;
-//    y_pos = finish;
+  else if(servo_n == 2){  // additional servo
+//    pin = servoPin2;
+//    mag_pos = finish;
   }
-  
   s.attach(pin);
 
   // set step size polarity
@@ -104,12 +104,11 @@ void moveServo(int servo_n, int start, int finish, int steps, int hold_time){
 void moveW(int well) {
   int steps = xWells[well] - x_pos;
   moveStepper( steps, 1);
-
 }
 
 
 void moveStepper(int steps, int mode) {
-  if(steps+x_pos > 350 || steps+x_pos <0){ return;} // past length of chip
+  if(steps+x_pos > maxSteps || steps+x_pos <0){ return;} // past length of chip
   if (mode == 1) {
     if (steps > 0) {
       xAxis->step(steps, FORWARD, MICROSTEP);
@@ -133,8 +132,8 @@ void moveStepper(int steps, int mode) {
   xAxis->release();  // release all coils to allow stepper to spin freely
 }
 
-void resetX() {
 
+void resetX() {
   // Move mag arm to neutral condition
   moveZ(zmiddle,5,1000);
 
@@ -213,7 +212,6 @@ void magTransfer(boolean delays) {
   // Remove beads from PCR
   moveZ(ztop,5,5000);
   moveStepper(-x_6,1);
-
 }
 
 

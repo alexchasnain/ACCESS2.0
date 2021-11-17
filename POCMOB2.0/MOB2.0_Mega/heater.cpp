@@ -1,4 +1,4 @@
-#include "heater.h"
+#include "heaters.h"
 
 // Temperature PID controller parameters
 float Kp = 200;   //Original 200, outputPWM max 11700, min -8000
@@ -12,6 +12,8 @@ int idTemp = 98; // Initial Denaturation (98 degC, 8 min)
 int idTime = 480;
 int sadTemp = 58; // Sulphonation and Deamination (58 degC, 1 hr)
 int sadTime = 3600;
+int wmTemp = 98; // Wax Melting (X degC, X min)
+int wmTime = 60;
 int bbTemp = 25; // Bead Binding (25 degC, 10 min)
 int bbTime = 600;
 int desTemp = 25; // Desulphonation (25 degC, 15 min)
@@ -85,12 +87,18 @@ double readTemp(int heater) {
   double VS_raw = 1023;
   double R0 = 14000;  // known resistors = 14 kOhm
 
-  // Choosing sample/PCR thermistor to read pin voltage
-  if (heater == 1) { // sample heater
+  // Choosing thermistor to read pin voltage
+  if (heater == 1) { // BSC heater
     VRx_raw = analogRead(thermistorBSCRxPin);
   }
   else if ( heater == 2) { // PCR heater
     VRx_raw = analogRead(thermistorPCRRxPin);
+  }
+  else if ( heater == 3) { // WM heater (Channels 1-2, "right side")
+    VRx_raw = analogRead(thermistorWMRRxPin);
+  }
+  else if ( heater == 4) { // WM heater (Channels 3-4, "left side")
+    VRx_raw = analogRead(thermistorWMLRxPin);
   }
   else {
     return -1;
@@ -268,7 +276,19 @@ void bsc() {
 }
 
 
-void cycle(){
+void wm(){
+  init_time = millis();  
+  // Sample Digestion
+  if(wmTime > 0.01){
+    Serial.println("L,Wax Melting,START");
+    setTemp(3,wmTemp, wmTime, false);
+    setTemp(4,wmTemp, wmTime, false);
+    Serial.println("L,Wax Melting, END");
+  }
+}
+
+
+void pcr(){
   init_time = millis();  
   // Elution
   if(eluTime > 0.01){

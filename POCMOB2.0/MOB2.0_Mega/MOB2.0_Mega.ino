@@ -12,7 +12,8 @@
  *  A8    thermistorR0Pin
  *  A9    thermistorBSCRxPin
  *  A10   thermistorPCRRxPin
- *  
+ *  A11   thermistorWMRRxPin
+ *  A12   thermistorWMLRxPin
  *  
  *  0     Serial RX
  *  1     Serial TX
@@ -36,7 +37,7 @@
  *  
  *  43    Limit switch pin (Input-Pullup)
  *  44~   Mag (Z) Servo PWM
- *  45~   Fluo (Y) Servo PWM
+ *  45~   
  *  46~   
  * 
  *  50    USB Shield - MISO
@@ -49,14 +50,12 @@
 
 #include <Adafruit_MotorShield.h> // Adafruit_motorshield V2
 #include "utility/Adafruit_MS_PWMServoDriver.h"
-
-#include "serialcomm.h"
+#include "serial.h"
+#include "heaters.h"
 #include "motors.h"
 
 void setup() {
-  
-  setupSerialcomm();
-  setupEselog();
+  setupSerial();
   setupHeaters();
   delay(1000);
   setupMotors();

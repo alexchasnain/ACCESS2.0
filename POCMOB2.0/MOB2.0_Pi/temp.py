@@ -140,7 +140,7 @@ def resetArd():
 
     print("Heater Arduino Connected!")
 
-def cycle():
+def pcr():
     global user, ser
     # Make folder in POCMOB2.0 directory
     now = datetime.now()
@@ -169,7 +169,7 @@ def cycle():
     ardSend("cnu(" + str(cycle_num)+")")
     
     # Send start command to Arduino
-    ardSend("cycle")
+    ardSend("pcr")
 
     # While loop - read Arduino, parse and log data
     cycling = True

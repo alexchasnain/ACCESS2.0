@@ -175,19 +175,16 @@ void parse_input() {
       Serial.println(digitalRead(limitPin));
 
     }
-    else if (strcmp(serialCmd, "melt") == 0) {
-      melt();
-    }
     else if (serialCmd[0] == ':') {
       rcode = modbus(serialCmd);
       //Serial.println(num_buffer);
     }
 
-    else if (serialCmd[0] == 'b' && serialCmd[6] == '(') { // bisCon(int digTemp, float digTime,int denTemp, float denTime, int conTemp, float conTime, int bindTemp, float bindTime);
+    else if (serialCmd[0] == 'b' && serialCmd[6] == '(') { // bsc(int digTemp, float digTime,int denTemp, float denTime, int conTemp, float conTime, int bindTemp, float bindTime);
       memcpy(&cmdBuffer[0], &serialCmd[7], 25);
       parse_split(8);
       Serial.println('*');
-      bisCon(atoi(cmds[0]), atof(cmds[1]), atoi(cmds[2]), atof(cmds[3]), atoi(cmds[4]), atof(cmds[5]), atoi(cmds[6]), atof(cmds[7]));
+      bsc(atoi(cmds[0]), atof(cmds[1]), atoi(cmds[2]), atof(cmds[3]), atoi(cmds[4]), atof(cmds[5]), atoi(cmds[6]), atof(cmds[7]));
       Serial.println("\n*");
     }
 
